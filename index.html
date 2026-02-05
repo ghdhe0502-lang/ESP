@@ -1,157 +1,138 @@
-
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amir Gamal | P10 Control Center</title>
+    <title>AITU | لوحة تحكم R&D</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --main: #00d1b2; --dark: #1a1a1a; --card: #242424; --text: #e0e0e0; }
-        body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 10px; transition: 0.3s; }
-        .dashboard { max-width: 600px; margin: auto; }
+        :root { --main-color: #ff3e3e; --bg-dark: #0f0f0f; --card-bg: #1a1a1a; --accent: #00f2ff; }
+        body { background: var(--bg-dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; }
+        .wrapper { max-width: 550px; margin: auto; }
         
-        /* المحاكي المطور */
-        .preview-box { background: #000; border: 4px solid #333; border-radius: 15px; padding: 15px; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0, 209, 178, 0.2); position: relative; }
-        #p10-canvas { width: 100%; height: 120px; background: #050505; border-radius: 5px; }
-        .status-badge { position: absolute; top: 10px; right: 10px; background: #2ecc71; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; animation: pulse 2s infinite; }
-        
-        .section { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
-        h3 { margin-top: 0; color: var(--main); font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
-        
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .input-box { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #888; }
-        input, select { width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; }
-        input:focus { border-color: var(--main); outline: none; }
+        /* محاكي الشاشة المطور */
+        .p10-monitor { background: #000; border: 3px solid #333; border-radius: 12px; padding: 10px; margin-bottom: 25px; box-shadow: 0 0 15px rgba(255, 62, 62, 0.3); }
+        #canvasSim { width: 100%; border-radius: 4px; background: #050505; }
+        .monitor-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--main-color); margin-top: 5px; font-weight: bold; }
 
-        .btn-update { background: var(--main); color: #000; width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-update:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 209, 178, 0.4); }
+        .control-card { background: var(--card-bg); padding: 20px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); border: 1px solid #2a2a2a; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
         
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
-        .tab { flex: 1; padding: 8px; background: #333; border-radius: 5px; text-align: center; cursor: pointer; font-size: 0.8rem; }
-        .tab.active { background: var(--main); color: black; }
-
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #bbb; }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #111; color: white; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0, 242, 255, 0.2); outline: none; }
+        
+        .btn-sync { background: linear-gradient(45deg, var(--main-color), #b30000); color: white; width: 100%; padding: 16px; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .btn-sync:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        
+        .badge { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: var(--accent); border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <div class="preview-box">
-        <span class="status-badge">LIVE SIMULATOR</span>
-        <canvas id="p10-canvas"></canvas>
-    </div>
-
-    <div class="section">
-        <h3><i class="fas fa-expand"></i> أبعاد الشاشة والتحكم</h3>
-        <div class="grid">
-            <div class="input-box">
-                <label>العرض (بكسل)</label>
-                <input type="number" id="dimW" value="64" oninput="updateSim()">
-            </div>
-            <div class="input-box">
-                <label>الارتفاع (بكسل)</label>
-                <input type="number" id="dimH" value="32" oninput="updateSim()">
-            </div>
-        </div>
-        <label>السطوع (0-255)</label>
-        <input type="range" id="bright" min="0" max="255" value="150">
-    </div>
-
-    <div class="section">
-        <h3><i class="fas fa-font"></i> الكلمات والنصوص</h3>
-        <input type="text" id="tA" value="Amir Gamal" placeholder="الكلمة الأولى">
-        <input type="text" id="tB" value="Tahata City" placeholder="الكلمة الثانية">
-        <label>وقت التبديل (ثانية)</label>
-        <input type="number" id="sTime" value="5">
-    </div>
-
-    <div class="section">
-        <h3><i class="fas fa-clock"></i> إعدادات الوقت والتاريخ</h3>
-        <div class="grid">
-            <div class="input-box">
-                <label>حجم الساعة</label>
-                <select id="cSize">
-                    <option value="0">صغير (Normal)</option>
-                    <option value="1">عريض (Bold)</option>
-                </select>
-            </div>
-            <div class="input-box">
-                <label>تنسيق التاريخ</label>
-                <select id="dFormat">
-                    <option value="0">هجري + ميلادي</option>
-                    <option value="1">ميلادي فقط</option>
-                </select>
-            </div>
+<div class="wrapper">
+    <div class="p10-monitor">
+        <canvas id="canvasSim"></canvas>
+        <div class="monitor-info">
+            <span><i class="fas fa-microchip"></i> ESP8266 Active</span>
+            <span id="displayingNow">AITU / R&D Mode</span>
         </div>
     </div>
 
-    <button class="btn-update" onclick="sendData()">
-        <i class="fas fa-sync-alt"></i> إرسال البيانات وتحديث الشاشة
-    </button>
+    <div class="control-card">
+        <div class="header">
+            <h2 style="margin:0; font-size: 1.3rem;">🚀 نظام التحكم الذكي</h2>
+            <div class="badge">Amir Gamal</div>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-expand-arrows-alt"></i> أبعاد الشاشة (Pixel):</label>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="wW" value="64" oninput="updatePreview()">
+                <input type="number" id="hH" value="32" oninput="updatePreview()">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-exchange-alt"></i> وقت التبديل بين AITU و R&D:</label>
+            <input type="number" id="switchT" value="5" min="1">
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-sun"></i> مستوى سطوع الشاشة:</label>
+            <input type="range" id="brVal" min="0" max="255" value="150">
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-history"></i> وضع التواريخ:</label>
+            <select id="dateMode">
+                <option value="0">هجري (يسار) | ميلادي (يمين)</option>
+                <option value="1">إخفاء التواريخ</option>
+            </select>
+        </div>
+
+        <button class="btn-sync" onclick="sendToESP()">
+            <i class="fas fa-paper-plane"></i> تحديث الشاشة الآن
+        </button>
+    </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('p10-canvas');
+    const canvas = document.getElementById('canvasSim');
     const ctx = canvas.getContext('2d');
-    let cycle = 0;
+    let toggle = true;
 
-    function updateSim() {
-        const w = document.getElementById('dimW').value;
-        const h = document.getElementById('dimH').value;
-        canvas.width = w * 4;
-        canvas.height = h * 4;
-        draw();
+    function updatePreview() {
+        canvas.width = document.getElementById('wW').value * 4;
+        canvas.height = document.getElementById('hH').value * 4;
+        drawPreview();
     }
 
-    function draw() {
+    function drawPreview() {
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // رسم شبكة الـ LED
+        // رسم النقاط (تأثير P10)
         ctx.fillStyle = "#111";
-        for(let i=0; i<canvas.width; i+=4) {
-            for(let j=0; j<canvas.height; j+=4) {
-                ctx.beginPath(); ctx.arc(i+2, j+2, 1, 0, Math.PI*2); ctx.fill();
+        for(let x=0; x<canvas.width; x+=4) {
+            for(let y=0; y<canvas.height; y+=4) {
+                ctx.beginPath(); ctx.arc(x+2, y+2, 1, 0, Math.PI*2); ctx.fill();
             }
         }
 
-        ctx.fillStyle = "#00d1b2";
-        ctx.textAlign = "center";
         const now = new Date();
-
-        // 1. التاريخين (فوق)
-        ctx.font = "12px monospace";
-        ctx.fillText(now.toLocaleDateString('en-GB'), 40, 20);
-        ctx.fillText("1447/08/17", canvas.width - 50, 20);
-
-        // 2. الساعة (نص)
-        ctx.font = "bold 25px monospace";
-        ctx.fillText(now.toLocaleTimeString('en-US', {hour12: true}), canvas.width/2, canvas.height/2 + 5);
-
-        // 3. النص المتبادل (تحت)
-        ctx.font = "15px Arial";
-        ctx.fillStyle = "#ff4757";
-        const txt = cycle == 0 ? document.getElementById('tA').value : document.getElementById('tB').value;
-        ctx.fillText(txt, canvas.width/2, canvas.height - 15);
-    }
-
-    setInterval(() => { cycle = cycle == 0 ? 1 : 0; }, 3000);
-    setInterval(draw, 1000);
-
-    function sendData() {
-        const now = new Date();
-        const params = `w=${document.getElementById('dimW').value}&h=${document.getElementById('dimH').value}&tA=${document.getElementById('tA').value}&tB=${document.getElementById('tB').value}&time=${document.getElementById('sTime').value}&br=${document.getElementById('bright').value}&h=${now.getHours()}&m=${now.getMinutes()}&s=${now.getSeconds()}&day=${now.getDate()}&mon=${now.getMonth()+1}&yr=${now.getFullYear()}`;
+        ctx.fillStyle = "#ff3e3e";
         
-        fetch('/update?' + params)
-        .then(() => {
-            alert("✅ تم إرسال كل التعديلات بنجاح!");
-        })
-        .catch(() => alert("❌ خطأ في الاتصال"));
+        // 1. التواريخ (الهجري يسار والميلادي يمين كما طلبت)
+        ctx.font = "12px monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("17/08/1447", 10, 20); // هجري
+        ctx.textAlign = "right";
+        ctx.fillText(now.toLocaleDateString('en-GB'), canvas.width - 10, 20); // ميلادي
+
+        // 2. الساعة (منتصف)
+        ctx.textAlign = "center";
+        ctx.font = "bold 28px Courier New";
+        ctx.fillText(now.toLocaleTimeString('en-US', {hour12: true}), canvas.width/2, canvas.height/2 + 10);
+
+        // 3. الكلمات المتبادلة
+        ctx.fillStyle = "#00f2ff";
+        ctx.font = "bold 18px Arial";
+        ctx.fillText(toggle ? "AITU" : "R&D", canvas.width/2, canvas.height - 15);
     }
 
-    window.onload = updateSim;
+    setInterval(() => { toggle = !toggle; drawPreview(); }, 3000);
+    setInterval(drawPreview, 1000);
+
+    function sendToESP() {
+        const d = new Date();
+        const url = `/update?w=${document.getElementById('wW').value}&h=${document.getElementById('hH').value}&time=${document.getElementById('switchT').value}&br=${document.getElementById('brVal').value}&h=${d.getHours()}&m=${d.getMinutes()}&s=${d.getSeconds()}&day=${d.getDate()}&mon=${d.getMonth()+1}&yr=${d.getFullYear()}&tA=AITU&tB=R&D`;
+        
+        fetch(url).then(() => alert("✅ تم إرسال التعديلات لـ AITU بنجاح!"));
+    }
+
+    window.onload = updatePreview;
 </script>
 </body>
 </html>
